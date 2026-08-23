@@ -12,7 +12,7 @@ export class PopReplaceEngine extends BaseEngine {
     const n = 1 + Math.floor(Math.random() * 3);
     for (let k = 0; k < n; k++) {
       const idx = Math.floor(Math.random() * this.cells.length);
-      this.cells[idx] = this.takeNext();
+      this.cells[idx] = this.takeNext(this.cells[idx]);
     }
     this.emit();
   }

@@ -12,7 +12,7 @@ export class CellFadeEngine extends BaseEngine {
     const batch = Math.max(1, Math.round(this.cellCount / 6));
     for (let k = 0; k < batch; k++) {
       const idx = Math.floor(Math.random() * this.cells.length);
-      this.cells[idx] = this.takeNext();
+      this.cells[idx] = this.takeNext(this.cells[idx]);
     }
     this.emit();
   }

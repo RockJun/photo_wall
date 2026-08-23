@@ -7,6 +7,7 @@ import { createEngine } from "./engine";
 import type { WallEngine } from "./engine/WallEngine";
 import { Wall } from "./components/Wall";
 import { ControlPanel } from "./components/ControlPanel";
+import { ClockOverlay } from "./components/ClockOverlay";
 
 export default function App() {
   const { config, update, reset } = useWallConfig();
@@ -35,6 +36,9 @@ export default function App() {
   return (
     <div className="relative h-full w-full">
       <Wall cells={cells} config={config} />
+
+      {/* 时钟 + 天气叠加 */}
+      <ClockOverlay showClock={config.showClock} showWeather={config.showWeather} city={config.city} />
 
       {/* 设置齿轮：左侧吸附隐藏，鼠标移到左缘滑出 */}
       <div

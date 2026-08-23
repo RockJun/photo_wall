@@ -220,6 +220,55 @@ export function ControlPanel({
                 />
               </button>
             </div>
+
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-gray-200">叠加时钟</p>
+                <p className="text-[10px] text-gray-500">右上角显示时间与日期</p>
+              </div>
+              <button
+                onClick={() => onUpdate("showClock", !config.showClock)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.showClock ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    config.showClock ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-gray-200">叠加天气</p>
+                <p className="text-[10px] text-gray-500">联网成功才显示</p>
+              </div>
+              <button
+                onClick={() => onUpdate("showWeather", !config.showWeather)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.showWeather ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    config.showWeather ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="mb-2">
+              <label className="mb-1 block text-[10px] text-gray-400">天气城市</label>
+              <input
+                type="text"
+                value={config.city}
+                placeholder="例如：上海、深圳、东京"
+                onChange={(e) => onUpdate("city", e.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none transition placeholder:text-gray-500 focus:border-primary-cyan/50"
+              />
+            </div>
           </section>
 
           <section className="mb-6">

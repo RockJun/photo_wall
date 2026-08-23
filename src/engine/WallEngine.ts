@@ -130,7 +130,18 @@ export abstract class BaseEngine implements WallEngine {
     document.addEventListener("visibilitychange", this.visibilityHandler);
   }
 
-  protected takeNext(): ImageItem {
+  protected takeNext(exclude?: ImageItem): ImageItem {
+    if (this.pool.length === 0) return exclude ?? ({} as ImageItem);
+    // 若池子有 >1 张，避免取到与当前格相同的图
+    if (exclude && this.pool.length > 1) {
+      let pick = this.pool[Math.floor(Math.random() * this.pool.length)];
+      let guard = 0;
+      while (pick.id === exclude.id && guard < 10) {
+        pick = this.pool[Math.floor(Math.random() * this.pool.length)];
+        guard++;
+      }
+      return pick;
+    }
     return this.pool[Math.floor(Math.random() * this.pool.length)];
   }
 

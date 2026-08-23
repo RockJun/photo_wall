@@ -24,6 +24,9 @@ export interface WallConfig {
   sizeWeights: number[];
   remoteRatio: number; // 0~1，网络图在混合池中的占比
   usePicsum: boolean; // 是否使用 Picsum 真实网络图（默认 false 用本地渐变占位，离线可用）
+  showClock: boolean; // 是否叠加时钟+日期
+  showWeather: boolean; // 是否叠加天气（联网成功才显示）
+  city: string; // 天气城市名（通过地理编码接口转经纬度）
 }
 
 export const DEFAULT_CONFIG: WallConfig = {
@@ -34,6 +37,9 @@ export const DEFAULT_CONFIG: WallConfig = {
   sizeWeights: [3, 2, 1],
   remoteRatio: 0,
   usePicsum: false,
+  showClock: true,
+  showWeather: true,
+  city: "北京",
 };
 
 export const SIZE_TIERS = [
