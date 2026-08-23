@@ -1,0 +1,11 @@
+node_modules/
+data/uploads/*
+!data/uploads/.gitkeep
+dist/
+*.log
+.DS_Store
+
+# 开发过程文件（不入库）
+.codebuddy/
+gemini-code-*.html
+*.png
