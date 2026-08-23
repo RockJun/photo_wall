@@ -1,12 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOAD_DIR = path.resolve(__dirname, "../data/uploads");
 
 // 外部图库目录：启动时自动扫描其中的图片并展示（不在项目内，通过静态路径暴露）
-export const EXTERNAL_DIR = process.env.EXTERNAL_IMAGE_DIR || "/home/ma/图片";
+// 默认使用当前用户主目录下的「图片」文件夹，避免硬编码具体用户名
+export const EXTERNAL_DIR = process.env.EXTERNAL_IMAGE_DIR || path.join(os.homedir(), "图片");
 
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp"]);
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -45,7 +47,7 @@ export async function deleteFile(filename: string): Promise<void> {
   await fs.rm(target, { force: true });
 }
 
-/** 扫描外部图库目录（如 /home/ma/图片），返回其相对 URL（通过 /ext 静态路径访问） */
+/** 扫描外部图库目录（用户主目录下的「图片」文件夹），返回其相对 URL（通过 /ext 静态路径访问） */
 export async function listExternalFiles(): Promise<string[]> {
   try {
     const entries = await fs.readdir(EXTERNAL_DIR);

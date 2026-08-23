@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use("/api", imagesRouter);
 app.use("/uploads", express.static(UPLOAD_DIR));
-// 暴露外部图库目录（如 /home/ma/图片）
+// 暴露外部图库目录（用户主目录下的「图片」文件夹）
 app.use("/ext", express.static(EXTERNAL_DIR));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, ts: Date.now() }));

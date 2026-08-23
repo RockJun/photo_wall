@@ -107,7 +107,7 @@ export function ControlPanel({
     }
   };
 
-  // 仅展示可管理的上传图（/uploads）；外部图库（/home/ma/图片）为只读，单独统计
+  // 仅展示可管理的上传图（/uploads）；外部图库为只读，单独统计
   const uploadUrls = localUrls.filter((u) => u.startsWith("/uploads/"));
   const externalCount = localUrls.filter((u) => u.startsWith("/ext/")).length;
 
@@ -253,7 +253,7 @@ export function ControlPanel({
 
             {externalCount > 0 && (
               <p className="mb-3 rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400">
-                外部图库（/home/ma/图片）：{externalCount} 张，只读展示
+                外部图库（用户「图片」目录）：{externalCount} 张，只读展示
               </p>
             )}
             <div className="space-y-2">
