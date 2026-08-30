@@ -9,6 +9,8 @@ export interface WallEngine {
   stop(): void;
   applyConfig(config: WallConfig): void;
   setOnUpdate(fn: UpdateFn): void;
+  /** 立即替换指定格子（视频播完/加载失败时触发，走正常切换动效） */
+  replaceCell(index: number): void;
 }
 
 /**
@@ -77,6 +79,14 @@ export abstract class BaseEngine implements WallEngine {
 
   setOnUpdate(fn: UpdateFn): void {
     this.onUpdate = fn;
+  }
+
+  /** 视频播完等场景下立即替换某个格子，重置计时避免下一拍过于密集 */
+  replaceCell(index: number): void {
+    if (!this.running || index < 0 || index >= this.cells.length) return;
+    this.cells[index] = this.takeNext(this.cells[index]);
+    this.emit();
+    this.lastTickTs = performance.now();
   }
 
   /**

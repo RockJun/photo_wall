@@ -5,12 +5,18 @@ import { WallCell } from "./WallCell";
 interface Props {
   cells: ImageItem[];
   config: WallConfig;
+  /** 某个格子的视频播完/出错，请求引擎替换该格 */
+  onVideoEnded: (index: number) => void;
+  /** 点击视频格子，打开全屏播放器 */
+  onOpenVideo: (item: ImageItem) => void;
+  /** 全屏播放器正在播放的视频 URL（对应墙内格子暂停） */
+  overlayUrl: string | null;
 }
 
 // collage：不规则无缝拼接网格，gap:0 图片占满整个视口、无任何间距
 // 通过 colSpan/rowSpan 合并单元格（横图 2x1 / 竖图 1x2 / 大图 2x2 / 方图 1x1）
 // grid-auto-flow:dense 错位补位填满空洞；1fr 行高让内容铺满视口
-export function Wall({ cells, config }: Props) {
+export function Wall({ cells, config, onVideoEnded, onOpenVideo, overlayUrl }: Props) {
   const cols = Math.max(2, Math.min(config.columns, 8));
   const rows = Math.max(2, Math.min(config.rows ?? 5, 8));
 
@@ -41,7 +47,14 @@ export function Wall({ cells, config }: Props) {
                 gridRow: `span ${rowSpan}`,
               }}
             >
-              <WallCell item={item} index={i} />
+              <WallCell
+                item={item}
+                index={i}
+                muted={config.muted}
+                suppressed={overlayUrl !== null && overlayUrl === item.url}
+                onOpenVideo={() => onOpenVideo(item)}
+                onVideoEnded={() => onVideoEnded(i)}
+              />
             </div>
           );
         })}

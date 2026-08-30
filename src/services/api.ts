@@ -1,21 +1,23 @@
-export interface LocalListResponse {
-  images: string[];
+import type { MediaEntry } from "../types";
+
+export interface LocalMediaResponse {
+  media: MediaEntry[];
 }
 
-export async function fetchLocalImages(): Promise<string[]> {
+export async function fetchLocalImages(): Promise<MediaEntry[]> {
   const res = await fetch("/api/images");
-  if (!res.ok) throw new Error("获取本地图片失败");
-  const data = (await res.json()) as LocalListResponse;
-  return data.images;
+  if (!res.ok) throw new Error("获取本地媒体失败");
+  const data = (await res.json()) as LocalMediaResponse;
+  return data.media;
 }
 
-export async function uploadImages(files: FileList): Promise<string[]> {
+export async function uploadImages(files: FileList): Promise<MediaEntry[]> {
   const form = new FormData();
   Array.from(files).forEach((f) => form.append("images", f));
   const res = await fetch("/api/upload", { method: "POST", body: form });
   if (!res.ok) throw new Error("上传失败");
-  const data = (await res.json()) as LocalListResponse;
-  return data.images;
+  const data = (await res.json()) as LocalMediaResponse;
+  return data.media;
 }
 
 export async function deleteImage(name: string): Promise<void> {

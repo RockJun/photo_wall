@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { X, Upload, Trash2, ImageOff, RotateCcw } from "lucide-react";
-import type { ImageItem, SwitchMode, WallConfig } from "../types";
+import { X, Upload, Trash2, ImageOff, RotateCcw, Film } from "lucide-react";
+import type { MediaEntry, SwitchMode, WallConfig } from "../types";
 import { MODE_LABELS } from "../types";
 import { uploadImages, deleteImage } from "../services/api";
 
@@ -10,7 +10,7 @@ interface Props {
   config: WallConfig;
   onUpdate: <K extends keyof WallConfig>(k: K, v: WallConfig[K]) => void;
   onReset: () => void;
-  localUrls: string[];
+  localMedia: MediaEntry[];
   onLocalChanged: () => void;
   poolSize: number;
 }
@@ -70,7 +70,7 @@ export function ControlPanel({
   config,
   onUpdate,
   onReset,
-  localUrls,
+  localMedia,
   onLocalChanged,
   poolSize,
 }: Props) {
@@ -84,7 +84,7 @@ export function ControlPanel({
     setUploadMsg("");
     try {
       await uploadImages(files);
-      setUploadMsg(`已上传 ${files.length} 张`);
+      setUploadMsg(`已上传 ${files.length} 个文件`);
       await onLocalChanged();
     } catch (e) {
       console.error(e);
@@ -107,9 +107,9 @@ export function ControlPanel({
     }
   };
 
-  // 仅展示可管理的上传图（/uploads）；外部图库为只读，单独统计
-  const uploadUrls = localUrls.filter((u) => u.startsWith("/uploads/"));
-  const externalCount = localUrls.filter((u) => u.startsWith("/ext/")).length;
+  // 仅展示可管理的上传媒体（/uploads）；外部图库为只读，单独统计
+  const uploadMedia = localMedia.filter((m) => m.url.startsWith("/uploads/"));
+  const externalCount = localMedia.filter((m) => m.url.startsWith("/ext/")).length;
 
   return (
     <>
@@ -204,6 +204,57 @@ export function ControlPanel({
             />
             <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
               <div>
+                <p className="text-xs font-medium text-gray-200">显示视频</p>
+                <p className="text-[10px] text-gray-500">
+                  {config.showVideo ? "视频融入照片墙轮播" : "关闭后纯图片墙"}
+                </p>
+              </div>
+              <button
+                onClick={() => onUpdate("showVideo", !config.showVideo)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.showVideo ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    config.showVideo ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            {config.showVideo && (
+              <Slider
+                label="视频占比"
+                value={Math.round(config.videoRatio * 100)}
+                min={0}
+                max={100}
+                step={5}
+                suffix="%"
+                onChange={(v) => onUpdate("videoRatio", v / 100)}
+              />
+            )}
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-gray-200">视频声音</p>
+                <p className="text-[10px] text-gray-500">
+                  {config.muted ? "静音播放（屏保推荐）" : "有声音（需先点击过页面）"}
+                </p>
+              </div>
+              <button
+                onClick={() => onUpdate("muted", !config.muted)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  !config.muted ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    !config.muted ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
                 <p className="text-xs font-medium text-gray-200">使用真实网络图</p>
                 <p className="text-[10px] text-gray-500">关闭则显示本地渐变占位（离线可用）</p>
               </div>
@@ -259,6 +310,44 @@ export function ControlPanel({
               </button>
             </div>
 
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-gray-200">氛围主题</p>
+                <p className="text-[10px] text-gray-500">按时段/天气/节日自动换背景与色调</p>
+              </div>
+              <button
+                onClick={() => onUpdate("ambientTheme", !config.ambientTheme)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.ambientTheme ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    config.ambientTheme ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="mb-2 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
+              <div>
+                <p className="text-xs font-medium text-gray-200">展厅模式</p>
+                <p className="text-[10px] text-gray-500">双击全屏，鼠标静止 5s 隐藏光标与入口</p>
+              </div>
+              <button
+                onClick={() => onUpdate("exhibitMode", !config.exhibitMode)}
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.exhibitMode ? "bg-primary-violet" : "bg-white/15"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                    config.exhibitMode ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
             <div className="mb-2">
               <label className="mb-1 block text-[10px] text-gray-400">天气城市</label>
               <input
@@ -273,7 +362,7 @@ export function ControlPanel({
 
           <section className="mb-6">
             <h3 className="mb-3 flex items-center justify-between text-xs font-medium uppercase tracking-wider text-gray-400">
-              <span>上传图库 ({uploadUrls.length})</span>
+              <span>上传媒体 ({uploadMedia.length})</span>
               <button
                 onClick={onReset}
                 className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
@@ -286,7 +375,7 @@ export function ControlPanel({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               multiple
               hidden
               onChange={(e) => handleUpload(e.target.files)}
@@ -296,31 +385,39 @@ export function ControlPanel({
               disabled={uploading}
               className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white/8 py-2.5 text-sm font-medium text-white transition hover:bg-white/15 disabled:opacity-50"
             >
-              <Upload size={16} /> {uploading ? "上传中…" : "上传图片"}
+              <Upload size={16} /> {uploading ? "上传中…" : "上传图片 / 视频"}
             </button>
             {uploadMsg && <p className="mb-2 text-xs text-primary-cyan">{uploadMsg}</p>}
 
             {externalCount > 0 && (
               <p className="mb-3 rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400">
-                外部图库（用户「图片」目录）：{externalCount} 张，只读展示
+                外部图库（用户「图片」目录）：{externalCount} 个文件，只读展示
               </p>
             )}
             <div className="space-y-2">
-              {uploadUrls.length === 0 && (
+              {uploadMedia.length === 0 && (
                 <div className="flex flex-col items-center gap-2 rounded-xl bg-white/5 py-6 text-gray-500">
                   <ImageOff size={22} />
-                  <span className="text-xs">暂无上传图片</span>
+                  <span className="text-xs">暂无上传媒体</span>
                 </div>
               )}
-              {uploadUrls.map((url) => (
+              {uploadMedia.map((m) => (
                 <div
-                  key={url}
+                  key={m.url}
                   className="flex items-center gap-2 rounded-lg bg-white/5 p-1.5 pr-2"
                 >
-                  <img src={url} alt="" className="h-9 w-9 rounded-md object-cover" />
-                  <span className="flex-1 truncate text-xs text-gray-300">{url.split("/").pop()}</span>
+                  {m.type === "video" ? (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-violet/25 text-primary-cyan">
+                      <Film size={16} />
+                    </span>
+                  ) : (
+                    <img src={m.url} alt="" className="h-9 w-9 rounded-md object-cover" />
+                  )}
+                  <span className="flex-1 truncate text-xs text-gray-300">
+                    {m.url.split("/").pop()}
+                  </span>
                   <button
-                    onClick={() => handleDelete(url)}
+                    onClick={() => handleDelete(m.url)}
                     className="rounded-md p-1 text-gray-400 transition hover:bg-red-500/20 hover:text-red-400"
                   >
                     <Trash2 size={14} />

@@ -14,10 +14,21 @@ body,
 }
 
 body {
-  background: radial-gradient(1200px 800px at 20% 10%, #1a1f3a 0%, #0b0f1a 55%, #060810 100%);
+  background: radial-gradient(
+    1200px 800px at 20% 10%,
+    var(--theme-bg-1, #1a1f3a) 0%,
+    var(--theme-bg-2, #0b0f1a) 55%,
+    var(--theme-bg-3, #060810) 100%
+  );
+  transition: background 1.5s ease;
   color: #f9fafb;
   font-family: "PingFang-SC", system-ui, sans-serif;
   overflow: hidden;
+}
+
+/* 夜间/节日夜晚暗角 */
+.theme-vignette {
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
 }
 
 .glass {
@@ -50,5 +61,48 @@ body {
 }
 .ken-burns {
   animation: ken-burns 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 视频 Ken Burns：仅对真实播放中的视频叠加轻微呼吸感缩放，静帧不晃动 */
+@keyframes video-breathe {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.04) translate(0.6%, -0.5%);
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+  }
+}
+.video-breathe {
+  animation: video-breathe 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 圆形展开：新内容从中心 clip-path 圆形扩散覆盖旧内容 */
+@keyframes anim-circle-in {
+  from {
+    clip-path: circle(0% at 50% 50%);
+  }
+  to {
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+.anim-circle-in {
+  animation: anim-circle-in 0.8s cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
+  will-change: clip-path;
+}
+
+/* 百叶窗：单条条纹纵向收缩（配合 JS 侧交错 delay） */
+@keyframes anim-blinds-stripe-kf {
+  to {
+    transform: scaleY(0);
+  }
+}
+.anim-blinds-stripe {
+  animation: anim-blinds-stripe-kf 0.7s ease-in forwards;
+  transform-origin: center;
   will-change: transform;
 }

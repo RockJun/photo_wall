@@ -10,8 +10,21 @@ export const UPLOAD_DIR = path.resolve(__dirname, "../data/uploads");
 // 默认使用当前用户主目录下的「图片」文件夹，避免硬编码具体用户名
 export const EXTERNAL_DIR = process.env.EXTERNAL_IMAGE_DIR || path.join(os.homedir(), "图片");
 
-const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp"]);
+const ALLOWED_IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".bmp"]);
+// 浏览器可原生播放的视频格式（mkv 兼容性差，不收录）
+const ALLOWED_VIDEO_EXT = new Set([".mp4", ".webm", ".m4v", ".mov", ".ogg", ".ogv"]);
+const ALLOWED_EXT = new Set([...ALLOWED_IMAGE_EXT, ...ALLOWED_VIDEO_EXT]);
+
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+/** 视频文件放宽到 200MB（multer 按MediaType 过滤，图片实际很少超过 10MB） */
+export const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
+
+export type MediaEntry = { url: string; type: "image" | "video" };
+
+/** 根据扩展名判定媒体类型 */
+export function mediaType(filename: string): "image" | "video" {
+  return ALLOWED_VIDEO_EXT.has(path.extname(filename).toLowerCase()) ? "video" : "image";
+}
 
 export async function ensureUploadDir(): Promise<void> {
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
@@ -31,10 +44,12 @@ export function sanitizeFilename(name: string): string {
   return `${base || "img"}_${stamp}_${rand}${ext}`;
 }
 
-export async function listUploadedFiles(): Promise<string[]> {
+export async function listUploadedFiles(): Promise<MediaEntry[]> {
   try {
     const entries = await fs.readdir(UPLOAD_DIR);
-    return entries.filter((f) => ALLOWED_EXT.has(path.extname(f).toLowerCase()));
+    return entries
+      .filter((f) => ALLOWED_EXT.has(path.extname(f).toLowerCase()))
+      .map((f) => ({ url: `/uploads/${f}`, type: mediaType(f) }));
   } catch {
     return [];
   }
@@ -47,13 +62,13 @@ export async function deleteFile(filename: string): Promise<void> {
   await fs.rm(target, { force: true });
 }
 
-/** 扫描外部图库目录（用户主目录下的「图片」文件夹），返回其相对 URL（通过 /ext 静态路径访问） */
-export async function listExternalFiles(): Promise<string[]> {
+/** 扫描外部图库目录（用户主目录下的「图片」文件夹），返回其媒体条目（通过 /ext 静态路径访问） */
+export async function listExternalFiles(): Promise<MediaEntry[]> {
   try {
     const entries = await fs.readdir(EXTERNAL_DIR);
     return entries
       .filter((f) => ALLOWED_EXT.has(path.extname(f).toLowerCase()))
-      .map((f) => `/ext/${encodeURIComponent(f)}`);
+      .map((f) => ({ url: `/ext/${encodeURIComponent(f)}`, type: mediaType(f) }));
   } catch {
     return [];
   }

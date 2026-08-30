@@ -1,4 +1,4 @@
-import type { ImageItem } from "../types";
+import type { ImageItem, MediaEntry } from "../types";
 import { makePlaceholder } from "./placeholder";
 
 const REMOTE_SEEDS = [
@@ -48,6 +48,13 @@ function cellSpan(seed: string): { colSpan: number; rowSpan: number } {
   return { colSpan: 1, rowSpan: 1 }; // 方图
 }
 
+/** 视频格子倾向大跨度（横屏 2x1 / 大屏 2x2），小格子里播放效果差 */
+function videoSpan(seed: string): { colSpan: number; rowSpan: number } {
+  return hashStr("v-" + seed) % 3 === 0
+    ? { colSpan: 2, rowSpan: 2 }
+    : { colSpan: 2, rowSpan: 1 };
+}
+
 export function buildRemotePool(count: number, usePicsum: boolean): ImageItem[] {
   const seeds = shuffle(REMOTE_SEEDS).slice(0, count);
   return seeds.map((seed, i) => {
@@ -58,6 +65,7 @@ export function buildRemotePool(count: number, usePicsum: boolean): ImageItem[] 
       id: `remote-${seed}`,
       url: usePicsum ? picsumUrl(seed, w, h) : makePlaceholder(seed, w, h),
       source: "remote" as const,
+      type: "image" as const,
       w,
       h,
       ...span,
@@ -65,27 +73,68 @@ export function buildRemotePool(count: number, usePicsum: boolean): ImageItem[] 
   });
 }
 
-export function buildPool(localUrls: string[], remoteRatio: number, usePicsum: boolean): ImageItem[] {
-  const local: ImageItem[] = localUrls.map((url, i) => {
+export interface BuildPoolOptions {
+  remoteRatio: number;
+  usePicsum: boolean;
+  /** 0~1，视频在池中的目标占比；0 表示纯图片 */
+  videoRatio: number;
+  /** 视频显示总开关 */
+  showVideo: boolean;
+}
+
+export function buildPool(localMedia: MediaEntry[], opts: BuildPoolOptions): ImageItem[] {
+  const { remoteRatio, usePicsum, videoRatio, showVideo } = opts;
+
+  const localImages = localMedia.filter((m) => m.type === "image");
+  const localVideos = localMedia.filter((m) => m.type === "video");
+
+  const local: ImageItem[] = localImages.map((m, i) => {
     const span = cellSpan("local-" + i);
     return {
       id: `local-${i}`,
-      url,
+      url: m.url,
       source: "local" as const,
+      type: "image" as const,
       w: 320,
       h: HEIGHT_TIERS[i % HEIGHT_TIERS.length],
       ...span,
     };
   });
 
-  // remoteRatio = 0 且没有本地图时，生成最小占位池兜底，避免白屏
-  if (remoteRatio <= 0 && local.length > 0) return shuffle(local);
+  // 按 videoRatio 决定混入多少条视频；总开关关闭或本地（上传/外部目录）没有任何视频时，不混入视频块
+  let videos: ImageItem[] = [];
+  if (showVideo && videoRatio > 0 && localVideos.length > 0) {
+    const poolTarget = Math.max(local.length, 36);
+    const videoCount = Math.min(
+      localVideos.length,
+      Math.max(1, Math.round((poolTarget * videoRatio) / Math.max(0.01, 1 - videoRatio)))
+    );
+    videos = shuffle(localVideos)
+      .slice(0, videoCount)
+      .map((m, i) => {
+        const span = videoSpan(m.url);
+        return {
+          id: `video-${i}`,
+          url: m.url,
+          source: "local" as const,
+          type: "video" as const,
+          w: 640,
+          h: 360,
+          ...span,
+        };
+      });
+  }
 
-  const totalDesired = Math.max(local.length, 36);
+  const mixed = [...local, ...videos];
+
+  // remoteRatio = 0 且没有本地图时，生成最小占位池兜底，避免白屏
+  if (remoteRatio <= 0 && mixed.length > 0) return shuffle(mixed);
+
+  const totalDesired = Math.max(mixed.length, 36);
   const remoteCount = Math.round(totalDesired * remoteRatio);
   const remote = buildRemotePool(remoteCount, usePicsum);
 
-  return shuffle([...local, ...remote]);
+  return shuffle([...mixed, ...remote]);
 }
 
 export function pickRandom<T>(arr: T[], n: number): T[] {
